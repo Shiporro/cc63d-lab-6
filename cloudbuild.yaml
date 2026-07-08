@@ -1,0 +1,15 @@
+steps:
+  # Paso 1: Construir la imagen de Docker
+  - name: 'gcr.io/cloud-builders/docker'
+    args: [
+      'build', 
+      '-t', '$_LOCATION-docker.pkg.dev/$PROJECT_ID/$_REPOSITORY/incident-manager:$COMMIT_SHA', 
+      '.'
+    ]
+
+  # Paso 2: Subir la imagen a Artifact Registry
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['push', '$_LOCATION-docker.pkg.dev/$PROJECT_ID/$_REPOSITORY/incident-manager:$COMMIT_SHA']
+
+images:
+  - '$_LOCATION-docker.pkg.dev/$PROJECT_ID/$_REPOSITORY/incident-manager:$COMMIT_SHA'
