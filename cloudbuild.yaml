@@ -62,3 +62,4 @@ images:
 
 options:
   logging: CLOUD_LOGGING_ONLY
+  
