@@ -97,7 +97,7 @@ def init_db():
             team TEXT NOT NULL,
             slo_target REAL NOT NULL DEFAULT 99.9,
             sli_type TEXT NOT NULL DEFAULT 'availability',
-            created_at TEXT NOT NULL DEFAULT (datetime('now'))
+            created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
         );
 
         CREATE TABLE IF NOT EXISTS oncall (
@@ -105,8 +105,8 @@ def init_db():
             service_id INTEGER NOT NULL REFERENCES services(id),
             person TEXT NOT NULL,
             email TEXT NOT NULL,
-            start_date TEXT NOT NULL,
-            end_date TEXT NOT NULL
+            start_date DATE NOT NULL,
+            end_date DATE NOT NULL
         );
 
         CREATE TABLE IF NOT EXISTS incidents (
@@ -115,15 +115,15 @@ def init_db():
             title TEXT NOT NULL,
             severity INTEGER NOT NULL CHECK(severity BETWEEN 1 AND 4),
             status TEXT NOT NULL DEFAULT 'open',
-            started_at TEXT NOT NULL DEFAULT (datetime('now')),
-            resolved_at TEXT,
+            started_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+            resolved_at TIMESTAMPTZ,
             created_by TEXT NOT NULL DEFAULT 'system'
         );
 
         CREATE TABLE IF NOT EXISTS incident_timeline (
             id SERIAL PRIMARY KEY,
             incident_id INTEGER NOT NULL REFERENCES incidents(id),
-            timestamp TEXT NOT NULL DEFAULT (datetime('now')),
+            timestamp TIMESTAMPTZ NOT NULL DEFAULT NOW(),
             author TEXT NOT NULL,
             message TEXT NOT NULL
         );
@@ -136,7 +136,7 @@ def init_db():
             impact TEXT NOT NULL,
             action_items TEXT NOT NULL,
             lessons TEXT,
-            created_at TEXT NOT NULL DEFAULT (datetime('now'))
+            created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
         );
     """)
     db.commit()
@@ -144,7 +144,7 @@ def init_db():
 
 
 def now():
-    return datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+    return datetime.now(timezone.utc)
 
 
 # --- Frontend ---
@@ -328,7 +328,7 @@ def get_current_oncall(service_id):
     cur = db.cursor()
 
     try:
-        today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+        today = datetime.now(timezone.utc).date()
 
         cur.execute(
             """
