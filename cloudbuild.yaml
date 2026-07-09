@@ -39,3 +39,6 @@ steps:
 
 images:
   - 'southamerica-west1-docker.pkg.dev/$PROJECT_ID/tarea-6/cc63d-lab-6:$COMMIT_SHA'
+
+options:
+  logging: CLOUD_LOGGING_ONLY
