@@ -1,6 +1,5 @@
 # cc63d-lab-6 · Monolito de gestión de incidentes
 
-
 Código base del **Lab 7** del curso CC63D (Universidad de Chile, DCC Educación
 Continua). Es una aplicación monolítica de gestión de incidentes: un único
 proceso Flask que sirve **la API y la interfaz web** desde el mismo contenedor,
