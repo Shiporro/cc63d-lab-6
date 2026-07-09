@@ -17,3 +17,5 @@ EXPOSE 8000
 # memoria y Prometheus haría scrape a uno u otro al azar, dando números
 # inconsistentes. Para el lab, 1 worker mantiene las métricas correctas.
 CMD ["sh", "-c", "gunicorn --bind 0.0.0.0:${PORT:-8080} --workers 1 app:app"]
+
+

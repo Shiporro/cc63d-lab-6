@@ -1,0 +1,41 @@
+steps:
+  # 1. Construir imagen Docker
+  - name: 'gcr.io/cloud-builders/docker'
+    args:
+      - 'build'
+      - '-t'
+      - 'southamerica-west1-docker.pkg.dev/$PROJECT_ID/tarea-6/cc63d-lab-6:$COMMIT_SHA'
+      - '.'
+
+  # 2. Ejecutar pruebas con pytest
+  - name: 'python:3.11'
+    entrypoint: 'bash'
+    args:
+      - '-c'
+      - |
+        pip install -r requirements.txt
+        pytest
+
+  # 3. Publicar imagen en Artifact Registry
+  - name: 'gcr.io/cloud-builders/docker'
+    args:
+      - 'push'
+      - 'southamerica-west1-docker.pkg.dev/$PROJECT_ID/tarea-6/cc63d-lab-6:$COMMIT_SHA'
+
+  # 4. Desplegar en Cloud Run
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+    entrypoint: 'gcloud'
+    args:
+      - 'run'
+      - 'deploy'
+      - 'monolitonuebe'
+      - '--image'
+      - 'southamerica-west1-docker.pkg.dev/$PROJECT_ID/tarea-6/cc63d-lab-6:$COMMIT_SHA'
+      - '--region'
+      - 'southamerica-west1'
+      - '--platform'
+      - 'managed'
+      - '--allow-unauthenticated'
+
+images:
+  - 'southamerica-west1-docker.pkg.dev/$PROJECT_ID/tarea-6/cc63d-lab-6:$COMMIT_SHA'
