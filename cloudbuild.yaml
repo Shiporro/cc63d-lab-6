@@ -7,12 +7,27 @@ steps:
       - 'southamerica-west1-docker.pkg.dev/$PROJECT_ID/tarea-6/cc63d-lab-6:$COMMIT_SHA'
       - '.'
 
-  # 2. Ejecutar pruebas con pytest
+  # 2. Ejecutar pruebas con pytest usando PostgreSQL local
   - name: 'python:3.11'
     entrypoint: 'bash'
     args:
       - '-c'
       - |
+        set -e
+
+        apt-get update
+        apt-get install -y postgresql postgresql-contrib
+        service postgresql start
+
+        su postgres -c "psql -c \"ALTER USER postgres PASSWORD 'postgres';\""
+        su postgres -c "createdb cc63d_test"
+
+        export DB_HOST=localhost
+        export DB_NAME=cc63d_test
+        export DB_USER=postgres
+        export DB_PASSWORD=postgres
+        export FLAKY_ERROR_RATE=0
+
         pip install -r requirements-dev.txt
         pytest
 
@@ -22,9 +37,8 @@ steps:
       - 'push'
       - 'southamerica-west1-docker.pkg.dev/$PROJECT_ID/tarea-6/cc63d-lab-6:$COMMIT_SHA'
 
-  # 4. Desplegar en Cloud Run
   - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
-    entrypoint: 'gcloud'
+    entrypoint: gcloud
     args:
       - 'run'
       - 'deploy'
@@ -33,9 +47,15 @@ steps:
       - 'southamerica-west1-docker.pkg.dev/$PROJECT_ID/tarea-6/cc63d-lab-6:$COMMIT_SHA'
       - '--region'
       - 'southamerica-west1'
-      - '--platform'
-      - 'managed'
       - '--allow-unauthenticated'
+
+      # Lineas agregadas para conectar con Cloud SQL
+      - '--add-cloudsql-instances'
+      - 'monolito-501911:southamerica-west1:monolito-postgres'
+      - '--set-env-vars'
+      - 'DB_HOST=/cloudsql/monolito-501911:southamerica-west1:monolito-postgres,DB_NAME=monolito_db,DB_USER=monolito_user'
+      - '--set-secrets'
+      - 'DB_PASSWORD=db-password:latest'
 
 images:
   - 'southamerica-west1-docker.pkg.dev/$PROJECT_ID/tarea-6/cc63d-lab-6:$COMMIT_SHA'

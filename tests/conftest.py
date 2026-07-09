@@ -1,30 +1,47 @@
-"""Fixtures compartidas de pytest.
+"""Fixtures compartidas de pytest para PostgreSQL."""
 
-Cada test corre contra una base de datos SQLite **temporal y limpia**, para que
-no dependan del orden de ejecución ni dejen basura entre corridas.
-"""
 import os
-import tempfile
 
 import pytest
 
-# La ruta de la DB se lee al importar la app, así que la fijamos ANTES del import.
-_TMP_DB = os.path.join(tempfile.gettempdir(), "cc63d_test_incidents.db")
-os.environ["DATABASE_PATH"] = _TMP_DB
-# El endpoint /work falla aleatoriamente; en los tests lo queremos determinista.
+# Variables para PostgreSQL de pruebas.
+# En Cloud Build puedes usar un PostgreSQL local levantado en el paso de test.
+os.environ.setdefault("DB_HOST", "localhost")
+os.environ.setdefault("DB_NAME", "cc63d_test")
+os.environ.setdefault("DB_USER", "postgres")
+os.environ.setdefault("DB_PASSWORD", "postgres")
 os.environ["FLAKY_ERROR_RATE"] = "0"
 
-import app as appmodule  # noqa: E402  (debe ir tras fijar las env vars)
+import app as appmodule  # noqa: E402
+
+
+def limpiar_tablas():
+    db = appmodule.get_db()
+    cur = db.cursor()
+
+    try:
+        cur.execute("""
+            TRUNCATE TABLE
+                postmortems,
+                incident_timeline,
+                incidents,
+                oncall,
+                services
+            RESTART IDENTITY CASCADE
+        """)
+        db.commit()
+    finally:
+        cur.close()
 
 
 @pytest.fixture
 def client():
-    # DB fresca por test: borramos el archivo y recreamos el schema.
-    if os.path.exists(_TMP_DB):
-        os.remove(_TMP_DB)
+    appmodule.app.config["TESTING"] = True
+
     with appmodule.app.app_context():
         appmodule.init_db()
-    appmodule.app.config["TESTING"] = True
+        limpiar_tablas()
+
     with appmodule.app.test_client() as c:
         yield c
 
